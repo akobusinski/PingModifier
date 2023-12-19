@@ -9,7 +9,8 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import org.spongepowered.configurate.ConfigurateException;
 import wtf.gacek.pingmodifier.PingModifier;
-import wtf.gacek.pingmodifier.constants.Constants;
+import wtf.gacek.pingmodifier.constants.BuildConstants;
+import wtf.gacek.pingmodifier.constants.Colors;
 import wtf.gacek.pingmodifier.constants.Permissions;
 
 public class MainCommand {
@@ -23,11 +24,11 @@ public class MainCommand {
                             try {
                                 PingModifier.getInstance().reload();
                             } catch (ConfigurateException e) {
-                                source.sendMessage(Component.text("Failed to reload config!", Constants.RED_COLOR));
+                                source.sendMessage(Component.text("Failed to reload config!", Colors.RED));
                                 return 1;
                             }
 
-                            source.sendMessage(Component.text("Successfully reloaded!", Constants.GREEN_COLOR));
+                            source.sendMessage(Component.text("Successfully reloaded!", Colors.GREEN));
                             return 1;
                         })
                 )
@@ -43,23 +44,23 @@ public class MainCommand {
 
         TextComponent.Builder builder = Component.text();
 
-        builder.append(Component.text(String.format("PingModifier v%s help\n", Constants.VERSION), Constants.GOLD_COLOR));
+        builder.append(Component.text(String.format("PingModifier v%s help\n", BuildConstants.VERSION), Colors.GOLD));
 
         if (source.hasPermission(Permissions.RELOAD_CONFIG.getPermission())) { // Reload subcommand
             builder.append(
-                    Component.text("\t- ", Constants.GRAY_COLOR),
-                    Component.text("/pingmodifier reload", Constants.GOLD_COLOR),
-                    Component.text(" - ", Constants.GRAY_COLOR),
-                    Component.text("Reloads the configuration file\n", Constants.GOLD_COLOR)
+                    Component.text("\t- ", Colors.GRAY),
+                    Component.text("/pingmodifier reload", Colors.GOLD),
+                    Component.text(" - ", Colors.GRAY),
+                    Component.text("Reloads the configuration file\n", Colors.GOLD)
             );
         }
 
         // Help Subcommand
         builder.append(
-                Component.text("\t- ", Constants.GRAY_COLOR),
-                Component.text("/pingmodifier help", Constants.GOLD_COLOR),
-                Component.text(" - ", Constants.GRAY_COLOR),
-                Component.text("Shows this help command\n", Constants.GOLD_COLOR)
+                Component.text("\t- ", Colors.GRAY),
+                Component.text("/pingmodifier help", Colors.GOLD),
+                Component.text(" - ", Colors.GRAY),
+                Component.text("Shows this help command\n", Colors.GOLD)
         );
 
         source.sendMessage(builder.build());

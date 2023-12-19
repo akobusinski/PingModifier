@@ -18,7 +18,7 @@ import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 import wtf.gacek.pingmodifier.commands.MainCommand;
 import wtf.gacek.pingmodifier.config.Configuration;
-import wtf.gacek.pingmodifier.constants.Constants;
+import wtf.gacek.pingmodifier.constants.BuildConstants;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +27,7 @@ import java.nio.file.Path;
 @Plugin(
         id = "pingmodifier",
         name = "PingModifier",
-        version = Constants.VERSION,
+        version = BuildConstants.VERSION,
         authors = "GacekKosmatek",
         description = "Lets you customize the server's MOTD"
 )
