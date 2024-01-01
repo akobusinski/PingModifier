@@ -5,14 +5,12 @@ import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.proxy.server.ServerPing;
 import com.velocitypowered.api.util.Favicon;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.jetbrains.annotations.Nullable;
 import wtf.gacek.pingmodifier.config.Configuration;
 import wtf.gacek.pingmodifier.config.ServerMOTD;
 
 import javax.imageio.ImageIO;
-import java.awt.Image;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -28,12 +26,12 @@ public class ProxyPingListener implements EventHandler<ProxyPingEvent> {
     private final PingModifier plugin;
     private Favicon defaultFavicon;
     private Configuration config;
-    private final HashMap<String, Favicon> serverFaviconCache = new HashMap<>();
+    private final HashMap<String, Favicon> faviconCache = new HashMap<>();
 
     public void clearCache() {
         config = plugin.getConfig();
         defaultFavicon = getFavicon(config.getDefaultFavicon());
-        serverFaviconCache.clear();
+        faviconCache.clear();
     }
 
     private BufferedImage resize(BufferedImage original, int width, int height) {
@@ -95,10 +93,11 @@ public class ProxyPingListener implements EventHandler<ProxyPingEvent> {
         }
 
         if (motd.getFavicon() != null) {
-            Favicon favicon = getFavicon(motd.getFavicon());
+            Favicon favicon = faviconCache.containsKey(motd.getFavicon()) ? faviconCache.get(motd.getFavicon()) : getFavicon(motd.getFavicon());
 
             if (favicon != null) {
                 builder.favicon(favicon);
+                faviconCache.putIfAbsent(motd.getFavicon(), favicon);
             }
         }
     }
