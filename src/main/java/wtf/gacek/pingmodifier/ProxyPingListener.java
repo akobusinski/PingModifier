@@ -4,8 +4,10 @@ import com.velocitypowered.api.event.EventHandler;
 import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.proxy.server.ServerPing;
 import com.velocitypowered.api.util.Favicon;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.jetbrains.annotations.Nullable;
+import wtf.gacek.pingmodifier.config.Configuration;
 import wtf.gacek.pingmodifier.config.ServerMOTD;
 
 import javax.imageio.ImageIO;
@@ -16,17 +18,22 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 
+@SuppressWarnings("SameParameterValue")
 public class ProxyPingListener implements EventHandler<ProxyPingEvent> {
     public ProxyPingListener(PingModifier plugin) {
         this.plugin = plugin;
+        this.config = plugin.getConfig();
+        this.defaultFavicon = getFavicon(config.getDefaultFavicon());
     }
     private final PingModifier plugin;
     private Favicon defaultFavicon;
-    private HashMap<String, Favicon> serverFaviconMap = new HashMap<>();
+    private Configuration config;
+    private final HashMap<String, Favicon> serverFaviconCache = new HashMap<>();
 
     public void clearCache() {
-        defaultFavicon = null;
-        serverFaviconMap = new HashMap<>();
+        config = plugin.getConfig();
+        defaultFavicon = getFavicon(config.getDefaultFavicon());
+        serverFaviconCache.clear();
     }
 
     private BufferedImage resize(BufferedImage original, int width, int height) {
@@ -51,25 +58,10 @@ public class ProxyPingListener implements EventHandler<ProxyPingEvent> {
         return image;
     }
 
-    private @Nullable Favicon getFavicon(String server) {
-        if (serverFaviconMap.containsKey(server)) {
-            return serverFaviconMap.get(server);
-        }
-
-        boolean isDefaultIcon = plugin.getConfig().motdListContainsServer(server);
-
-        if (isDefaultIcon && defaultFavicon != null) {
-            return defaultFavicon;
-        }
-
-        ServerMOTD motd = plugin.getConfig().getMOTDByServer(server);
-
-        if (motd == null) {
-            return null;
-        }
-
-        File faviconFile = new File(plugin.dataFolder, isDefaultIcon ? plugin.getConfig().getDefaultFavicon() : motd.getFavicon());
+    private @Nullable Favicon getFavicon(String path) {
+        File faviconFile = new File(plugin.dataFolder, path);
         if (!faviconFile.exists()) return null;
+        if (!faviconFile.isFile()) return null;
 
         if (!faviconFile.canRead()) {
             plugin.logger.warn("Cannot read favicon file!");
@@ -78,15 +70,7 @@ public class ProxyPingListener implements EventHandler<ProxyPingEvent> {
 
         try {
             BufferedImage image = readAndScaleImage(faviconFile, 64, 64);
-
-            Favicon favicon = Favicon.create(image);
-
-            if (!isDefaultIcon) {
-                serverFaviconMap.put(server, favicon);
-            } else {
-                defaultFavicon = favicon;
-            }
-            return favicon;
+            return Favicon.create(image);
         } catch (IOException e) {
             plugin.logger.error("Failed to create favicon!", e);
         }
@@ -94,26 +78,43 @@ public class ProxyPingListener implements EventHandler<ProxyPingEvent> {
         return null;
     }
 
+    private void applyMOTD(ServerPing.Builder builder, @Nullable ServerMOTD motd) {
+        if (motd == null) {
+            return;
+        }
+
+        if (motd.getMotd() != null) {
+            builder.description(MiniMessage.miniMessage().deserialize(motd.getMotd()));
+        }
+
+        if (motd.getFavicon() != null) {
+            Favicon favicon = getFavicon(motd.getFavicon());
+
+            if (favicon != null) {
+                builder.favicon(favicon);
+            }
+        }
+    }
+
     @Override
     public void execute(ProxyPingEvent event) {
         ServerPing.Builder builder = event.getPing().asBuilder();
-
-        String hostname = null;
-
-        if (event.getConnection().getVirtualHost().isPresent()) {
-            hostname = event.getConnection().getVirtualHost().get().getHostName();
+        if (defaultFavicon != null) {
+            builder.favicon(defaultFavicon);
         }
 
-        ServerMOTD motd = plugin.getConfig().getMOTDByServer(hostname);
+        String hostname = event.getConnection().getVirtualHost().isPresent() ? event.getConnection().getVirtualHost().get().getHostName() : null;
+        int protocol = event.getConnection().getProtocolVersion().getProtocol();
 
+        ServerMOTD hostnameMOTD = config.getServerMotdMap().get(hostname);
+        ServerMOTD protocolMOTD = config.getMOTDByProtocol(protocol);
 
-        Favicon icon = getFavicon(hostname);
-        if (icon != null) builder.favicon(icon);
+        applyMOTD(builder, hostnameMOTD);
+        applyMOTD(builder, protocolMOTD);
 
-        int playerCount = plugin.server.getPlayerCount();
-        builder.onlinePlayers(playerCount).maximumPlayers(playerCount + 1);
-        if (motd != null) {
-            builder.description(LegacyComponentSerializer.legacyAmpersand().deserialize(motd.getMotd()));
+        if (config.isOnlineCountIncremental()) {
+            int playerCount = plugin.server.getPlayerCount();
+            builder.onlinePlayers(playerCount).maximumPlayers(playerCount + 1);
         }
 
         event.setPing(builder.build());

@@ -6,9 +6,9 @@ import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.event.EventManager;
 import com.velocitypowered.api.event.PostOrder;
+import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyPingEvent;
-import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -18,6 +18,8 @@ import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
 import wtf.gacek.pingmodifier.commands.MainCommand;
 import wtf.gacek.pingmodifier.config.Configuration;
+import wtf.gacek.pingmodifier.config.ProtocolVersion;
+import wtf.gacek.pingmodifier.config.serializers.ProtocolSerializer;
 import wtf.gacek.pingmodifier.constants.BuildConstants;
 
 import java.io.File;
@@ -46,16 +48,16 @@ public class PingModifier {
         this.server = server;
         this.logger = logger;
         this.dataFolder = folder.toFile();
-        this.configFile = dataFolder.toPath().resolve("config.yml").toFile();
+        this.configFile = dataFolder.toPath().resolve("config.hocon").toFile();
         this.configLoader = HoconConfigurationLoader
                 .builder()
                 .defaultOptions(options -> options
+                        .serializers(build -> build.register(ProtocolVersion.class, new ProtocolSerializer()))
                         .shouldCopyDefaults(true)
                         .header("PingModifier Config")
                 )
                 .path(configFile.toPath())
                 .build();
-        pingListener = new ProxyPingListener(this);
         instance = this;
     }
 
@@ -79,6 +81,8 @@ public class PingModifier {
         if (!configFile.exists()) {
             saveConfig();
         }
+
+        pingListener = new ProxyPingListener(this);
 
         EventManager eventManager = server.getEventManager();
         eventManager.register(this, ProxyPingEvent.class, PostOrder.LATE, pingListener);
