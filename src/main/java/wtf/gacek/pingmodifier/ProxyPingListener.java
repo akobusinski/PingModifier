@@ -60,11 +60,18 @@ public class ProxyPingListener implements EventHandler<ProxyPingEvent> {
 
     private @Nullable Favicon getFavicon(String path) {
         File faviconFile = new File(plugin.dataFolder, path);
-        if (!faviconFile.exists()) return null;
-        if (!faviconFile.isFile()) return null;
+        if (!faviconFile.exists()) {
+            plugin.logger.warn(String.format("The favicon file at \"%s\" doesn't exist!", faviconFile.getAbsolutePath()));
+            return null;
+        }
+
+        if (!faviconFile.isFile()) {
+            plugin.logger.warn(String.format("The favicon file at \"%s\" is not a file!", faviconFile.getAbsolutePath()));
+            return null;
+        }
 
         if (!faviconFile.canRead()) {
-            plugin.logger.warn("Cannot read favicon file!");
+            plugin.logger.warn(String.format("Cannot read favicon file at \"%s\"!", faviconFile.getAbsolutePath()));
             return null;
         }
 
@@ -72,7 +79,7 @@ public class ProxyPingListener implements EventHandler<ProxyPingEvent> {
             BufferedImage image = readAndScaleImage(faviconFile, 64, 64);
             return Favicon.create(image);
         } catch (IOException e) {
-            plugin.logger.error("Failed to create favicon!", e);
+            plugin.logger.error(String.format("Failed to create favicon! (%s)", faviconFile.getAbsolutePath()), e);
         }
 
         return null;
