@@ -27,9 +27,9 @@ public class ProtocolVersion {
         } else if (this.sign == Signs.LESS_OR_EQUAL) {
             return this.version >= protocol;
         } else if (this.sign == Signs.MORE) {
-            return this.version <= protocol;
+            return this.version < protocol;
         } else if (this.sign == Signs.LESS) {
-            return this.version <= protocol;
+            return this.version > protocol;
         } else {
             return this.version == protocol;
         }
