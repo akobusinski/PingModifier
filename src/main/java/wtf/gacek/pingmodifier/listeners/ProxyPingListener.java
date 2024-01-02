@@ -1,4 +1,4 @@
-package wtf.gacek.pingmodifier;
+package wtf.gacek.pingmodifier.listeners;
 
 import com.velocitypowered.api.event.EventHandler;
 import com.velocitypowered.api.event.proxy.ProxyPingEvent;
@@ -6,6 +6,7 @@ import com.velocitypowered.api.proxy.server.ServerPing;
 import com.velocitypowered.api.util.Favicon;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.jetbrains.annotations.Nullable;
+import wtf.gacek.pingmodifier.PingModifier;
 import wtf.gacek.pingmodifier.cache.HostnameProtocol;
 import wtf.gacek.pingmodifier.config.Configuration;
 import wtf.gacek.pingmodifier.config.ServerMOTD;

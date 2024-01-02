@@ -21,6 +21,7 @@ import wtf.gacek.pingmodifier.config.Configuration;
 import wtf.gacek.pingmodifier.config.ProtocolVersion;
 import wtf.gacek.pingmodifier.config.serializers.ProtocolSerializer;
 import wtf.gacek.pingmodifier.constants.BuildConstants;
+import wtf.gacek.pingmodifier.listeners.ProxyPingListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class PingModifier {
     public final File dataFolder;
     private final File configFile;
     private Configuration config;
-    private HoconConfigurationLoader configLoader;
+    private final HoconConfigurationLoader configLoader;
     private CommentedConfigurationNode configurationNode;
     private ProxyPingListener pingListener;
     private static PingModifier instance;
