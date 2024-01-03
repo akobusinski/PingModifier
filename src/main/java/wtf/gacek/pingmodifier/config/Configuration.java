@@ -3,7 +3,6 @@ package wtf.gacek.pingmodifier.config;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
-import wtf.gacek.pingmodifier.PingModifier;
 import wtf.gacek.pingmodifier.math.Signs;
 
 import java.util.Map;
@@ -19,6 +18,11 @@ public class Configuration {
     private Map<ProtocolVersion, ServerMOTD> protocolMotdMap = Map.of(new ProtocolVersion(Signs.MORE_OR_EQUAL, 765), ServerMOTD.of("favicon2.png", "Example Protocol MOTD!"));
     @Comment("Whether or not have the max player count one more player than the current online players")
     private boolean incrementalOnlineCount = true;
+    @Comment("Time for a server ping to expire in the cache (in MS)\nTIP: -1 disables expiring")
+    private long pingExpireTime = -1L;
+
+    @Comment("Time for a favicon to expire in the cache (in MS)\nTIP: -1 disables expiring")
+    private long faviconExpireTime = -1L;
 
     public boolean isOnlineCountIncremental() {
         return incrementalOnlineCount;
@@ -56,5 +60,13 @@ public class Configuration {
             }
         }
         return null;
+    }
+
+    public long getPingExpireTime() {
+        return pingExpireTime;
+    }
+
+    public long getFaviconExpireTime() {
+        return faviconExpireTime;
     }
 }

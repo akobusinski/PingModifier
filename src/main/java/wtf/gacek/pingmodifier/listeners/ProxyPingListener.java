@@ -8,6 +8,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.jetbrains.annotations.Nullable;
 import wtf.gacek.pingmodifier.PingModifier;
 import wtf.gacek.pingmodifier.cache.HostnameProtocol;
+import wtf.gacek.pingmodifier.cache.impl.TimedCacheMap;
 import wtf.gacek.pingmodifier.config.Configuration;
 import wtf.gacek.pingmodifier.config.ServerMOTD;
 
@@ -16,7 +17,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 
 @SuppressWarnings("SameParameterValue")
 public class ProxyPingListener implements EventHandler<ProxyPingEvent> {
@@ -24,18 +24,20 @@ public class ProxyPingListener implements EventHandler<ProxyPingEvent> {
         this.plugin = plugin;
         this.config = plugin.getConfig();
         this.defaultFavicon = getFavicon(config.getDefaultFavicon());
+        this.pingCache = new TimedCacheMap<>(config.getPingExpireTime());
+        this.faviconCache = new TimedCacheMap<>(config.getFaviconExpireTime());
     }
     private final PingModifier plugin;
     private Favicon defaultFavicon;
     private Configuration config;
-    private final HashMap<String, Favicon> faviconCache = new HashMap<>();
-    private final HashMap<HostnameProtocol, ServerPing.Builder> pingCache = new HashMap<>();
+    private final TimedCacheMap<String, Favicon> faviconCache;
+    private final TimedCacheMap<HostnameProtocol, ServerPing.Builder> pingCache;
 
     public void clearCache() {
         config = plugin.getConfig();
         defaultFavicon = getFavicon(config.getDefaultFavicon());
-        faviconCache.clear();
-        pingCache.clear();
+        faviconCache.clearCache();
+        pingCache.clearCache();
     }
 
     private BufferedImage resize(BufferedImage original, int width, int height) {
@@ -97,11 +99,11 @@ public class ProxyPingListener implements EventHandler<ProxyPingEvent> {
         }
 
         if (motd.getFavicon() != null) {
-            Favicon favicon = faviconCache.containsKey(motd.getFavicon()) ? faviconCache.get(motd.getFavicon()) : getFavicon(motd.getFavicon());
+            Favicon favicon = faviconCache.containsItem(motd.getFavicon()) ? faviconCache.getItem(motd.getFavicon()) : getFavicon(motd.getFavicon());
 
             if (favicon != null) {
                 builder.favicon(favicon);
-                faviconCache.putIfAbsent(motd.getFavicon(), favicon);
+                faviconCache.setItem(motd.getFavicon(), favicon);
             }
         }
     }
@@ -112,9 +114,10 @@ public class ProxyPingListener implements EventHandler<ProxyPingEvent> {
         int protocol = event.getConnection().getProtocolVersion().getProtocol();
 
         HostnameProtocol hostnameProtocol = new HostnameProtocol(hostname, protocol);
-        boolean cached = pingCache.containsKey(hostnameProtocol);
+        ServerPing.Builder cachedBuilder = pingCache.getItem(hostnameProtocol);
+        boolean cached = cachedBuilder != null;
 
-        ServerPing.Builder builder = cached ? pingCache.get(hostnameProtocol) : event.getPing().asBuilder();
+        ServerPing.Builder builder = cached ? cachedBuilder : event.getPing().asBuilder();
 
         if (!cached) {
             if (defaultFavicon != null) {
@@ -133,7 +136,7 @@ public class ProxyPingListener implements EventHandler<ProxyPingEvent> {
             builder.onlinePlayers(playerCount).maximumPlayers(playerCount + 1);
         }
 
-        pingCache.putIfAbsent(hostnameProtocol, builder);
+        pingCache.setItem(hostnameProtocol, builder);
         event.setPing(builder.build());
     }
 }
